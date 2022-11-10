@@ -37,11 +37,29 @@ def main():
     # print(gs.board)
     load_images()  # load images
     running = True
+    sq_selected = ()  # no square selected initially, keeps track of last click of user - tuple: (row, col)
+    player_clicks = []  # keeps track of player clicks - two tuples: e.g. [(6,4), (4,4)]
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:  # quits when we hit x
                 running = False
-        drawGameState(screen, gs)
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()  # (x,y) location of mouse
+                col = location[0]//SQ_SIZE
+                row = location[1]//SQ_SIZE
+                if sq_selected == (row, col):  # user clicked same square twice
+                    sq_selected = ()
+                    player_clicks = []
+                else:
+                    sq_selected = (row, col)
+                    player_clicks.append(sq_selected)
+                if len(player_clicks) == 2:  # after both clicks used
+                    move = chess_engine.Move(player_clicks[0], player_clicks[1], gs.board)
+                    print(move.get_chess_notation())
+                    gs.make_move(move)
+                    sq_selected = ()  # reset clicks
+                    player_clicks = []
+        draw_game_state(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
 
@@ -51,10 +69,10 @@ Used for all graphics in current game state
 """
 
 
-def drawGameState(screen, gs):
-    drawBoard(screen)  # draws squares on board
+def draw_game_state(screen, gs):
+    draw_board(screen)  # draws squares on board
     # adding pin piece highlighting and move suggestions are done here
-    drawPieces(screen, gs.board)  # draws pieces on top of squares
+    draw_pieces(screen, gs.board)  # draws pieces on top of squares
 
 
 """
@@ -62,7 +80,7 @@ Draws squares on board.
 Top left square is always light.
 Light squares have even values, dark squares have odd values
 """
-def drawBoard(screen):
+def draw_board(screen):
     # colors = [p.Color("white"), p.Color("gray")]  # for default board colors
     colors = [p.Color(252, 242, 230), p.Color(114, 150, 87)]
     for r in range(DIMENSION):
@@ -74,7 +92,7 @@ def drawBoard(screen):
 """
 Draws pieces on board using current GameState.board
 """
-def drawPieces(screen, board):
+def draw_pieces(screen, board):
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             piece = board[r][c]  # access pieces from board in chess_engine
